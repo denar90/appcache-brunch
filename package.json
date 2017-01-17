@@ -8,12 +8,10 @@
     "type": "git",
     "url": "git@github.com:brunch/appcache-brunch.git"
   },
-  "main": "./lib/index",
+  "main": "index.js",
   "scripts": {
-    "prepublish": "rm -rf lib && coffee --bare --output lib/ src/",
-    "test": "node_modules/.bin/mocha --require test/common.js"
+    "test": "mocha --require test/common.js"
   },
-  "dependencies": { },
   "devDependencies": {
     "mocha": "1.11.0",
     "chai": "1.7.0"
