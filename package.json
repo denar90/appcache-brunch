@@ -10,11 +10,16 @@
   },
   "main": "index.js",
   "scripts": {
-    "test": "mocha"
+    "test": "eslint index.js && mocha"
   },
   "devDependencies": {
     "chai": "^3",
     "mocha": "^3",
-    "sinon": "^1.17.7"
+    "sinon": "^1.17.7",
+    "eslint": "^3.12.2",
+    "eslint-config-brunch": "brunch/eslint-config-brunch"
+  },
+  "eslintConfig": {
+    "extends": "brunch"
   }
 }
