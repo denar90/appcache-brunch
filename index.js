@@ -22,7 +22,7 @@ class AppCacheCompiler {
       manifestFile: 'appcache.appcache'
     };
 
-    Object.assign(this.config, defaultOptions);
+    this.config = Object.assign({}, defaultOptions, this.config);
 
     this.paths = [];
   }
