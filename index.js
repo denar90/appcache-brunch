@@ -25,20 +25,21 @@ class AppCacheCompiler {
     Object.assign(this.config, defaultOptions);
 
     this.paths = [];
-    this.shasums = [];
   }
 
   onCompile(files) {
-    let results = files.map(file => {
+    this.shasums = [];
+
+    files.forEach(file => {
       const path = file.path;
 
       if (!/[.]appcache$/.test(path) && !this.config.ignore.test(path) && !this.paths.includes(path)) {
         this.paths.push(path);
         this.paths.sort();
       }
-
-      return this._readStream(file.path);
     });
+
+    let results = this.paths.map(path => this._readStream(path));
 
     return Promise.all(results).catch(error => console.log(error));
   }
