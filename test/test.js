@@ -117,7 +117,7 @@ describe('Plugin', () => {
     beforeEach(() => {
       plugin = new Plugin(config.publicVariables);
       writeStub = sandbox.stub(plugin, '_write');
-      plugin.files = [filePath];
+      plugin.paths = [filePath];
       plugin.shasums = [];
     });
 
@@ -161,7 +161,7 @@ http://other.example.org/image.jpg`;
 
       plugin._write('38445707d5a45be1e75fd44de16b3b65ce2bd4e9');
       return new Promise(resolve => {
-        fs.readFile(path.resolve(tmpDir, plugin.config.manifestFile), 'utf8', function(err, data) {
+        fs.readFile(path.resolve(tmpDir, plugin.config.manifestFile), 'utf8', (err, data) => {
           expect(data).to.be.equal(expected);
           resolve();
         });

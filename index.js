@@ -62,6 +62,7 @@ class AppCacheCompiler {
             shasum = crypto.createHash('sha1');
             shasum.update(this.shasums.sort().join(), 'ascii');
             this._write(shasum.digest('hex'));
+            resolve();
           }
         });
         stream.on('finish', resolve);

@@ -13,8 +13,8 @@
     "test": "mocha"
   },
   "devDependencies": {
-    "chai": "1.7.0",
-    "mocha": "1.11.0",
+    "chai": "^3",
+    "mocha": "^3",
     "sinon": "^1.17.7"
   }
 }
