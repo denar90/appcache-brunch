@@ -13,9 +13,8 @@ class AppCacheCompiler {
       console.warn('Warning: config.appcache is deprecated, please move it to config.plugins.appcache');
     }
 
-    // Defaults options
-    this.options = {
-      ignore: /[\\/][.]/,
+    const defaultOptions = {
+      ignore: /\/\./,
       externalCacheEntries: [],
       network: ['*'],
       fallback: {},
@@ -23,8 +22,7 @@ class AppCacheCompiler {
       manifestFile: 'appcache.appcache'
     };
 
-    // Merge config
-    Object.assign(this.options, this.config);
+    Object.assign(this.config, defaultOptions);
 
     this.paths = [];
     this.shasums = [];
@@ -34,8 +32,7 @@ class AppCacheCompiler {
     let results = files.map(file => {
       const path = file.path;
 
-      // ignore appcache file if it was iether present in assets or set in options
-      if (!/[.]appcache$/.test(path) && !this.options.ignore.test(path) && !this.paths.includes(path)) {
+      if (!/[.]appcache$/.test(path) && !this.config.ignore.test(path) && !this.paths.includes(path)) {
         this.paths.push(path);
         this.paths.sort();
       }
@@ -76,26 +73,25 @@ class AppCacheCompiler {
   }
 
   _write(shasum) {
-    return fs.writeFileSync(pathlib.join(this.publicPath, this.options.manifestFile),
+    return fs.writeFileSync(pathlib.join(this.publicPath, this.config.manifestFile),
       `\
 CACHE MANIFEST
 # ${shasum}
 
 NETWORK:
-${this.options.network.join('\n')}
+${this.config.network.join('\n')}
 
 FALLBACK:
-${this._format(this.options.fallback)}
+${this._format(this.config.fallback)}
 
 CACHE:
-${(Array.from(this.paths).map((p) => `${this.options.staticRoot}/${p}`)).join('\n')}
-${this.options.externalCacheEntries.join('\n')}\
+${(Array.from(this.paths).map((p) => `${this.config.staticRoot}/${p}`)).join('\n')}
+${this.config.externalCacheEntries.join('\n')}\
 `
     );
   }
 }
 
 AppCacheCompiler.prototype.brunchPlugin = true;
-AppCacheCompiler.prototype.staticTargetExtension = 'html';
 
 module.exports = AppCacheCompiler;
