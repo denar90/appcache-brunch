@@ -19,14 +19,16 @@ Or, do manual install:
 
 Specify [plugin settings](#settings) in config.coffee. For example:
 
-```coffeescript
-exports.config =
-  # ...
-  plugins:
-    appcache:
-      staticRoot: '/static'
-      network: ['*']
+```js
+exports.config = {
+  // ...
+  plugins: {
+    appcache: {
+      staticRoot: '/static',
+      network: ['*'],
       fallback: {}
+    }
+  }
 ```
 
 Link to the manifest from each template. For example:
@@ -47,16 +49,16 @@ Default value : `'.'`
 
 A regular expression specifying paths to omit from the manifest.
 
-Default value : `/[/][.]/` (hidden files and files in hidden directories are ignored)
+Default value : `/\/\./` (hidden files and files in hidden directories are ignored)
 
 ### appcache.externalCacheEntries
 
 An array of additionals URIs added to `CACHE` section. For example:
 
-```coffeescript
+```js
 externalCacheEntries: [
-  'http://other.example.org/image.jpg'
-  # ...
+  'http://other.example.org/image.jpg',
+  // ...
 ]
 ```
 
@@ -66,10 +68,10 @@ Default value : `[]`
 
 An array of resource URIs which require a network connection added to `NETWORK` section. For example:
 
-```coffeescript
+```js
 network: [
-  'login.php'
-  '/myapi'
+  'login.php',
+  '/myapi',
   'http://api.twitter.com'
 ]
 ```
@@ -80,30 +82,31 @@ Default value : `["*"]`
 
 An object mapping resource URIs to fallback URIs added to `FALLBACK` section. For example:
 
-```coffeescript
-fallback:
-  '/main.py': '/static.html'
-  'images/large/': 'images/offline.jpg'
-  '*.html': '/offline.html'
+```js
+fallback: [
+  { '/main.py': '/static.html' },
+  { 'images/large/': 'images/offline.jpg' },
+  { '*.html': '/offline.html' }
+]
 ```
 
-Default value : `{}`
+Default value : `[]`
 
 ### appcache.manifestFile
 
 Output filename. For example:
 
-```coffeescript
-manifestFile: "appcache.appcache"
+```js
+manifestFile: 'appcache.appcache'
 ```
 
-Default value : `"appcache.appcache"`
+Default value : `appcache.appcache`
 
 ## License
 
 The MIT License (MIT)
 
-Copyright (c) 2012-2013 Paul Miller (http://paulmillr.com)
+Copyright (c) 2012-2017 Paul Miller (http://paulmillr.com)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
