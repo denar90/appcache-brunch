@@ -19,7 +19,7 @@ class AppCacheCompiler {
       network: ['*'],
       fallback: {},
       staticRoot: '.',
-      manifestFile: 'appcache.appcache'
+      manifestFile: 'appcache.appcache',
     };
 
     this.config = Object.assign({}, defaultOptions, this.config);
@@ -39,20 +39,20 @@ class AppCacheCompiler {
       }
     });
 
-    let results = this.paths.map(path => this._readStream(path));
+    const results = this.paths.map(path => this._readStream(path));
 
     return Promise.all(results).catch(error => console.log(error));
   }
 
   _format(obj) {
-    return (Array.from(Object.keys(obj).sort()).map((k) => `${k} ${obj[k]}`)).join('\n');
+    return (Array.from(Object.keys(obj).sort()).map(k => `${k} ${obj[k]}`)).join('\n');
   };
 
   _readStream(path) {
     return new Promise((resolve, reject) => {
       try {
         let shasum = crypto.createHash('sha1');
-        let stream = fs.ReadStream(path);
+        const stream = fs.createReadStream(path);
 
         stream.on('data', data => shasum.update(data));
 
@@ -68,7 +68,7 @@ class AppCacheCompiler {
         stream.on('finish', resolve);
         stream.on('error', reject);
 
-      } catch(error) {
+      } catch (error) {
         reject(error);
       }
     });
@@ -87,7 +87,7 @@ FALLBACK:
 ${this._format(this.config.fallback)}
 
 CACHE:
-${(Array.from(this.paths).map((p) => `${this.config.staticRoot}/${p}`)).join('\n')}
+${(Array.from(this.paths).map(p => `${this.config.staticRoot}/${p}`)).join('\n')}
 ${this.config.externalCacheEntries.join('\n')}\
 `
     );
