@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const sinon = require('sinon');
 const expect = require('chai').expect;
+const sinonStubPromise = require('sinon-stub-promise');
 const mocks = require('./fixtures/mocks');
 const config = require('./fixtures/brunch.conf');
 const defaultOptions = require('./fixtures/defaultOptions').defaultOptions;
@@ -14,6 +15,7 @@ describe('Plugin', () => {
   let sandbox;
 
   beforeEach(() => {
+    sinonStubPromise(sinon);
     sandbox = sinon.sandbox.create();
     plugin = new Plugin(config.default);
   });
@@ -56,6 +58,36 @@ describe('Plugin', () => {
 
       it('should rewrite default options', () => {
         expect(plugin.config).to.be.deep.equal(config.publicVariablesWithConfig.plugins.appcache);
+      });
+    });
+  });
+
+  describe('compile', () => {
+    let processFileStub;
+
+    beforeEach(() => {
+      plugin = new Plugin(config.publicVariables);
+      processFileStub = sandbox.stub(plugin, '_processFile');
+    });
+
+    it('should call "_processFile" method', () => {
+      return plugin.compile(mocks.files[0], () => {
+        expect(123).to.be.have.been.calledOnce;
+      });
+    });
+  });
+
+  describe('compileStatic', () => {
+    let processFileStub;
+
+    beforeEach(() => {
+      plugin = new Plugin(config.publicVariables);
+      processFileStub = sandbox.stub(plugin, '_processFile').returns(Promise.resolve());
+    });
+
+    it('should call "_processFile" method', () => {
+      return plugin.compile(mocks.files[0], () => {
+        expect(processFileStub).to.be.have.been.calledOnce;
       });
     });
   });

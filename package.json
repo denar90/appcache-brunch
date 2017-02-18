@@ -8,16 +8,15 @@
     "type": "git",
     "url": "git@github.com:brunch/appcache-brunch.git"
   },
-  "main": "index.js",
   "scripts": {
     "test": "eslint index.js && mocha"
   },
   "devDependencies": {
     "chai": "^3",
+    "eslint": "^3",
+    "eslint-config-brunch": "^1",
     "mocha": "^3",
-    "sinon": "^1.17.7",
-    "eslint": "^3.12.2",
-    "eslint-config-brunch": "brunch/eslint-config-brunch"
+    "sinon": "^1"
   },
   "eslintConfig": {
     "extends": "brunch"

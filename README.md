@@ -20,7 +20,7 @@ Or, do manual install:
 Specify [plugin settings](#settings) in config.coffee. For example:
 
 ```js
-exports.config = {
+module.exports = {
   // ...
   plugins: {
     appcache: {

@@ -31,31 +31,12 @@ class AppCacheCompiler {
   }
 
   compile(file) {
-    try {
-      return this.processFile(file).then(() => file);
-    } catch (err) {
-      return Promise.reject(err);
-    }
+    return this._compile(file);
   }
 
   compileStatic(file) {
-    try {
-      return this.processFile(file).then(() => file);
-    } catch (err) {
-      return Promise.reject(err);
-    }
+    return this._compile(file);
   }
-
-  processFile(file) {
-    if (!/[.]appcache$/.test(file.path) && !this.config.ignore.test(file.path) && !this.paths.includes(file.path)) {
-      this.paths.push(file.path);
-      this.paths.sort();
-    }
-    return this._readStream(file.path).catch(error => {
-      throw new Error(error);
-    });
-  }
-
 
   onCompile(files) {
     this.shasums = [];
@@ -63,11 +44,12 @@ class AppCacheCompiler {
 
     try {
       if (this.changedFileContentShasum) {
-        this.pathsToCache = files
-          .filter(file => !/[.]appcache$/.test(file.path) && !this.config.ignore.test(file.path) && !this.pathsToCache.includes(file.path))
+        const pathsToCache = files
+          .filter(file => this._includePath(file.path, this.pathsToCache))
           .map(file => file.path)
           .sort();
 
+        this.pathsToCache.push(...pathsToCache);
         this._write(this.changedFileContentShasum);
       }
 
@@ -78,35 +60,40 @@ class AppCacheCompiler {
     }
   }
 
-  _format(obj) {
-    return (Array.from(Object.keys(obj).sort()).map(k => `${k} ${obj[k]}`)).join('\n');
-  };
-
-  _readStream(path) {
-    return new Promise((resolve, reject) => {
-      try {
-        let shasum = crypto.createHash('sha1');
-        const stream = fs.createReadStream(path);
-
-        stream.on('data', data => shasum.update(data));
-
-        stream.on('end', () => {
-          this.shasums.push(shasum.digest('hex'));
-          if (this.shasums.length === this.paths.length) {
-            shasum = crypto.createHash('sha1');
-            shasum.update(this.shasums.sort().join(), 'ascii');
-            this.changedFileContentShasum = shasum.digest('hex');
-          }
-          resolve();
-        });
-        stream.on('finish', resolve);
-        stream.on('error', reject);
-
-      } catch (error) {
-        reject(error);
-      }
-    });
+  _compile(file) {
+    try {
+      this._processFile(file);
+      return Promise.resolve(file);
+    } catch (err) {
+      return Promise.reject(err);
+    }
   }
+
+  _processFile(file) {
+    const path = file.path;
+    let shasum = crypto.createHash('sha1');
+    shasum.update(file.data);
+    this.shasums.push(shasum.digest('hex'));
+
+    if (this._includePath(path, this.paths)) {
+      this.paths.push(path);
+      this.paths.sort();
+    }
+
+    if (this.shasums.length === this.paths.length) {
+      shasum = crypto.createHash('sha1');
+      shasum.update(this.shasums.sort().join(), 'ascii');
+      this.changedFileContentShasum = shasum.digest('hex');
+    }
+  }
+
+  _includePath(path, paths) {
+    return !path.endsWith('.appcache') && !this.config.ignore.test(path) && !paths.includes(path);
+  }
+
+  _format(obj) {
+    return (Array.from(Object.keys(obj).sort(), k => `${k} ${obj[k]}`)).join('\n');
+  };
 
   _write(shasum) {
     return fs.writeFileSync(pathlib.join(this.publicPath, this.config.manifestFile),
