@@ -25,23 +25,57 @@ class AppCacheCompiler {
     this.config = Object.assign({}, defaultOptions, this.config);
 
     this.paths = [];
+    this.pathsToCache = [];
+    this.shasums = [];
+    this.changedFileContentShasum = null;
   }
+
+  compile(file) {
+    try {
+      return this.processFile(file).then(() => file);
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+
+  compileStatic(file) {
+    try {
+      return this.processFile(file).then(() => file);
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+
+  processFile(file) {
+    if (!/[.]appcache$/.test(file.path) && !this.config.ignore.test(file.path) && !this.paths.includes(file.path)) {
+      this.paths.push(file.path);
+      this.paths.sort();
+    }
+    return this._readStream(file.path).catch(error => {
+      throw new Error(error);
+    });
+  }
+
 
   onCompile(files) {
     this.shasums = [];
+    this.paths = [];
 
-    files.forEach(file => {
-      const path = file.path;
+    try {
+      if (this.changedFileContentShasum) {
+        this.pathsToCache = files
+          .filter(file => !/[.]appcache$/.test(file.path) && !this.config.ignore.test(file.path) && !this.pathsToCache.includes(file.path))
+          .map(file => file.path)
+          .sort();
 
-      if (!/[.]appcache$/.test(path) && !this.config.ignore.test(path) && !this.paths.includes(path)) {
-        this.paths.push(path);
-        this.paths.sort();
+        this._write(this.changedFileContentShasum);
       }
-    });
 
-    const results = this.paths.map(path => this._readStream(path));
-
-    return Promise.all(results).catch(error => console.log(error));
+      this.changedFileContentShasum = null;
+      return Promise.resolve(files);
+    } catch (error) {
+      return Promise.reject(error);
+    }
   }
 
   _format(obj) {
@@ -61,9 +95,9 @@ class AppCacheCompiler {
           if (this.shasums.length === this.paths.length) {
             shasum = crypto.createHash('sha1');
             shasum.update(this.shasums.sort().join(), 'ascii');
-            this._write(shasum.digest('hex'));
-            resolve();
+            this.changedFileContentShasum = shasum.digest('hex');
           }
+          resolve();
         });
         stream.on('finish', resolve);
         stream.on('error', reject);
@@ -87,7 +121,7 @@ FALLBACK:
 ${this._format(this.config.fallback)}
 
 CACHE:
-${(Array.from(this.paths).map(p => `${this.config.staticRoot}/${p}`)).join('\n')}
+${(Array.from(this.pathsToCache).map(p => `${this.config.staticRoot}/${p}`)).join('\n')}
 ${this.config.externalCacheEntries.join('\n')}\
 `
     );
@@ -95,5 +129,6 @@ ${this.config.externalCacheEntries.join('\n')}\
 }
 
 AppCacheCompiler.prototype.brunchPlugin = true;
+AppCacheCompiler.prototype.pattern = /(?:)/;
 
 module.exports = AppCacheCompiler;
