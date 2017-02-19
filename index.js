@@ -1,8 +1,11 @@
 'use strict';
 
 const crypto = require('crypto');
-const fs = require('fs');
 const pathlib = require('path');
+const promisify = require('micro-promisify');
+const fsWriteFile = promisify(require('fs').writeFile);
+
+const format = obj => (Array.from(Object.keys(obj).sort(), k => `${k} ${obj[k]}`)).join('\n');
 
 class AppCacheCompiler {
   constructor(config) {
@@ -50,7 +53,9 @@ class AppCacheCompiler {
           .sort();
 
         this.pathsToCache.push(...pathsToCache);
-        this._write(this.changedFileContentShasum);
+        return this._write(this.changedFileContentShasum).then(() => {
+          this.changedFileContentShasum = null;
+        });
       }
 
       this.changedFileContentShasum = null;
@@ -91,12 +96,8 @@ class AppCacheCompiler {
     return !path.endsWith('.appcache') && !this.config.ignore.test(path) && !paths.includes(path);
   }
 
-  _format(obj) {
-    return (Array.from(Object.keys(obj).sort(), k => `${k} ${obj[k]}`)).join('\n');
-  };
-
   _write(shasum) {
-    return fs.writeFileSync(pathlib.join(this.publicPath, this.config.manifestFile),
+    return fsWriteFile(pathlib.join(this.publicPath, this.config.manifestFile),
       `\
 CACHE MANIFEST
 # ${shasum}
@@ -105,7 +106,7 @@ NETWORK:
 ${this.config.network.join('\n')}
 
 FALLBACK:
-${this._format(this.config.fallback)}
+${format(this.config.fallback)}
 
 CACHE:
 ${(Array.from(this.pathsToCache).map(p => `${this.config.staticRoot}/${p}`)).join('\n')}

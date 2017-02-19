@@ -12,13 +12,14 @@
     "test": "eslint index.js && mocha"
   },
   "devDependencies": {
-    "chai": "^3",
     "eslint": "^3",
-    "eslint-config-brunch": "^1",
     "mocha": "^3",
-    "sinon": "^1"
+    "eslint-config-brunch": "^1"
   },
   "eslintConfig": {
     "extends": "brunch"
+  },
+  "dependencies": {
+    "micro-promisify": "^0.1.1"
   }
 }

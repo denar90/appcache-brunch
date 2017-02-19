@@ -2,207 +2,65 @@
 
 const fs = require('fs');
 const path = require('path');
-const sinon = require('sinon');
-const expect = require('chai').expect;
-const sinonStubPromise = require('sinon-stub-promise');
+const assert = require('assert');
+
 const mocks = require('./fixtures/mocks');
 const config = require('./fixtures/brunch.conf');
-const defaultOptions = require('./fixtures/defaultOptions').defaultOptions;
+
 const Plugin = require('../index');
 
 describe('Plugin', () => {
   let plugin;
-  let sandbox;
 
   beforeEach(() => {
-    sinonStubPromise(sinon);
-    sandbox = sinon.sandbox.create();
     plugin = new Plugin(config.default);
   });
 
-  afterEach(() => {
-    sandbox.restore();
-  });
-
-  it('should be an object', () => {
-    expect(plugin).to.be.ok;
-  });
-
-  it('should has #onCompile method', () => {
-    expect(plugin.onCompile).to.be.an.instanceof(Function);
-  });
-
-  describe('public variables', () => {
-    describe('when config is not set', () => {
-      beforeEach(() => {
-        plugin = new Plugin(config.publicVariables);
-      });
-
-      it('should have publicPath', () => {
-        expect(plugin.publicPath).to.be.equal(config.publicVariables.paths.public);
-      });
-
-      it('should have default options', () => {
-        expect(plugin.config).to.be.deep.equal(defaultOptions);
-      });
-
-      it('should have empty array paths', () => {
-        expect(plugin.paths).to.be.deep.equal([]);
-      });
+  describe('_processFile', () => {
+    it('adds file to "paths"', () => {
+      const file = mocks.files[0];
+      plugin._processFile(file);
+      assert.deepEqual(plugin.paths, ['path/to/file_1.js']);
     });
 
-    describe('when config is set', () => {
-      beforeEach(() => {
-        plugin = new Plugin(config.publicVariablesWithConfig);
-      });
-
-      it('should rewrite default options', () => {
-        expect(plugin.config).to.be.deep.equal(config.publicVariablesWithConfig.plugins.appcache);
-      });
-    });
-  });
-
-  describe('compile', () => {
-    let processFileStub;
-
-    beforeEach(() => {
-      plugin = new Plugin(config.publicVariables);
-      processFileStub = sandbox.stub(plugin, '_processFile');
+    it('ignores appcache files', () => {
+      const file = mocks.ignoredFiles[0];
+      plugin._processFile(file);
+      assert.deepEqual(plugin.paths, []);
     });
 
-    it('should call "_processFile" method', () => {
-      return plugin.compile(mocks.files[0], () => {
-        expect(123).to.be.have.been.calledOnce;
-      });
-    });
-  });
-
-  describe('compileStatic', () => {
-    let processFileStub;
-
-    beforeEach(() => {
-      plugin = new Plugin(config.publicVariables);
-      processFileStub = sandbox.stub(plugin, '_processFile').returns(Promise.resolve());
-    });
-
-    it('should call "_processFile" method', () => {
-      return plugin.compile(mocks.files[0], () => {
-        expect(processFileStub).to.be.have.been.calledOnce;
-      });
+    it('sets changedFileContentShasum', () => {
+      const file = mocks.files[0];
+      plugin._processFile(file);
+      assert.equal(plugin.changedFileContentShasum, 'a7b003bdeb8e286c215e85e5537cfc080abdc9db');
     });
   });
 
   describe('onCompile', () => {
-    let readStreamStub;
+    it('writes appcache file', () => {
+      const folderPath = path.join(process.cwd(), config.default.paths.public);
+      const appcacheFilePath = path.join(folderPath, 'appcache.appcache');
 
-    beforeEach(() => {
-      plugin = new Plugin(config.publicVariables);
-      readStreamStub = sandbox.stub(plugin, '_readStream');
-    });
+      fs.mkdirSync(folderPath);
 
-    describe('when files are ignored', () => {
-      it('should not fill "paths" with ignored files paths', () => {
-        plugin.onCompile(mocks.ignoredFiles);
-        expect(plugin.paths.length).to.be.equal(1);
-        expect(plugin.paths).to.be.deep.equal(['path/to/file_2.js']);
-      });
-
-      it('should call "_readStream" method', () => {
-        plugin.onCompile(mocks.ignoredFiles);
-        expect(readStreamStub).to.be.have.been.calledOnce;
-      });
-    });
-
-    it('should define "shasums" public variable', () => {
-      plugin.onCompile(mocks.files);
-      expect(plugin.shasums).to.be.deep.equal([]);
-    });
-
-    it('should fill "paths" with files paths', () => {
-      const expected = mocks.files.map(file => file.path);
-      plugin.onCompile(mocks.files);
-      expect(plugin.paths.length).to.be.equal(2);
-      expect(plugin.paths).to.be.deep.equal(expected);
-    });
-
-    it('should call "_readStream" method', () => {
-      plugin.onCompile(mocks.files);
-      expect(readStreamStub).to.be.have.been.calledTwice;
-    });
-  });
-
-  describe('_format', () => {
-    it('should format data', () => {
-      const data = {
-        'images/large/': 'images/offline.jpg',
-        '*.html': '/offline.html'
-      };
-      const expected = '*.html /offline.html\nimages/large/ images/offline.jpg';
-      expect(plugin._format(data)).to.be.equal(expected);
-    });
-  });
-
-  describe('_readStream', () => {
-    let writeStub;
-    const filePath = './test/fixtures/compiled-resource.js';
-
-    beforeEach(() => {
-      plugin = new Plugin(config.publicVariables);
-      writeStub = sandbox.stub(plugin, '_write');
-      plugin.paths = [filePath];
-      plugin.shasums = [];
-    });
-
-    it('should have shasums', () => {
-      return plugin._readStream(filePath).then(() => {
-        expect(plugin.shasums.length).to.be.equal(1);
-      }, error => expect(error).not.to.be.ok);
-    });
-
-    it('should call "write" method', () => {
-      return plugin._readStream(filePath).then(() => {
-        expect(writeStub).to.have.been.calledOnce;
-      }, error => expect(error).not.to.be.ok);
-    });
-  });
-
-  describe('_write', () => {
-    const tmpDir = './tmp';
-
-    before(() => {
-      fs.mkdirSync(tmpDir);
-    });
-
-    beforeEach(() => {
-      plugin = new Plugin(config.write);
-    });
-
-    it('should have shasums', () => {
-      const expected =`CACHE MANIFEST
-# 38445707d5a45be1e75fd44de16b3b65ce2bd4e9
-
+      plugin.changedFileContentShasum = 'a7b003bdeb8e286c215e85e5537cfc080abdc9db';
+      return plugin.onCompile(mocks.files)
+        .then(() => {
+          const actualAppCacheContent = fs.readFileSync(appcacheFilePath, 'utf8');
+          const expectedAppCacheContent = `CACHE MANIFEST
+# a7b003bdeb8e286c215e85e5537cfc080abdc9db\n
 NETWORK:
-/myapi
-
-FALLBACK:
-*.html /offline.html
-
+*\n
+FALLBACK:\n\n
 CACHE:
+./path/to/file_1.js
+./path/to/file_2.css\n`;
+          fs.unlinkSync(appcacheFilePath);
+          fs.rmdirSync(folderPath);
 
-http://other.example.org/image.jpg`;
-
-      plugin._write('38445707d5a45be1e75fd44de16b3b65ce2bd4e9');
-      return new Promise(resolve => {
-        fs.readFile(path.resolve(tmpDir, plugin.config.manifestFile), 'utf8', (err, data) => {
-          expect(data).to.be.equal(expected);
-          resolve();
-        });
-      });
-    });
-
-    after(() => {
-      fs.unlinkSync(path.resolve(tmpDir, plugin.config.manifestFile));
-      fs.rmdirSync(tmpDir);
+          assert.equal(actualAppCacheContent, expectedAppCacheContent);
+        })
+        .catch(e => console.log(e));
     });
   });
 });
