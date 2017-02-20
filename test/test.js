@@ -7,7 +7,7 @@ const assert = require('assert');
 const mocks = require('./fixtures/mocks');
 const config = require('./fixtures/brunch.conf');
 
-const Plugin = require('../index');
+const Plugin = require('..');
 
 describe('Plugin', () => {
   let plugin;
@@ -18,19 +18,19 @@ describe('Plugin', () => {
 
   describe('_processFile', () => {
     it('adds file to "paths"', () => {
-      const file = mocks.files[0];
+      const [file] = mocks.files;
       plugin._processFile(file);
       assert.deepEqual(plugin.paths, ['path/to/file_1.js']);
     });
 
     it('ignores appcache files', () => {
-      const file = mocks.ignoredFiles[0];
-      plugin._processFile(file);
+      const [ignoredFiles] = mocks.ignoredFiles;
+      plugin._processFile(ignoredFiles);
       assert.deepEqual(plugin.paths, []);
     });
 
     it('sets changedFileContentShasum', () => {
-      const file = mocks.files[0];
+      const [file] = mocks.files;
       plugin._processFile(file);
       assert.equal(plugin.changedFileContentShasum, 'a7b003bdeb8e286c215e85e5537cfc080abdc9db');
     });
@@ -59,8 +59,7 @@ CACHE:
           fs.rmdirSync(folderPath);
 
           assert.equal(actualAppCacheContent, expectedAppCacheContent);
-        })
-        .catch(e => console.log(e));
+        });
     });
   });
 });

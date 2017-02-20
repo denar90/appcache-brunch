@@ -5,7 +5,9 @@ const pathlib = require('path');
 const promisify = require('micro-promisify');
 const fsWriteFile = promisify(require('fs').writeFile);
 
-const format = obj => (Array.from(Object.keys(obj).sort(), k => `${k} ${obj[k]}`)).join('\n');
+const format = obj => Array.from(Object.keys(obj).sort(), k => `${k} ${obj[k]}`).join('\n');
+
+const matchesAll = /(?:)/;
 
 class AppCacheCompiler {
   constructor(config) {
@@ -49,7 +51,7 @@ class AppCacheCompiler {
       if (this.changedFileContentShasum) {
         const pathsToCache = files
           .filter(file => this._includePath(file.path, this.pathsToCache))
-          .map(file => file.path)
+          .map(file => file.path.replace(new RegExp(`${this.publicPath}/`, 'g'), ''))
           .sort();
 
         this.pathsToCache.push(...pathsToCache);
@@ -109,7 +111,7 @@ FALLBACK:
 ${format(this.config.fallback)}
 
 CACHE:
-${(Array.from(this.pathsToCache).map(p => `${this.config.staticRoot}/${p}`)).join('\n')}
+${Array.from(this.pathsToCache, p => `${this.config.staticRoot}/${p}`).join('\n')}
 ${this.config.externalCacheEntries.join('\n')}\
 `
     );
@@ -117,6 +119,6 @@ ${this.config.externalCacheEntries.join('\n')}\
 }
 
 AppCacheCompiler.prototype.brunchPlugin = true;
-AppCacheCompiler.prototype.pattern = /(?:)/;
+AppCacheCompiler.prototype.pattern = matchesAll;
 
 module.exports = AppCacheCompiler;
