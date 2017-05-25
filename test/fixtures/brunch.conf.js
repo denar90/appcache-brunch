@@ -5,54 +5,8 @@ exports.default = {
   plugins: {}
 };
 
-exports.publicVariables = {
-  paths: {
-    public: 'public/'
-  },
-  plugins: {}
+exports.fallback = {
+  '/main.py': '/static.html',
+  'images/large/': 'images/offline.jpg',
+  '*.html': '/offline.html'
 };
-
-exports.publicVariablesWithConfig = {
-  paths: {
-    public: 'public/'
-  },
-  plugins: {
-    appcache: {
-      ignore: /\/\./,
-      manifestFile: 'my.appcache',
-      staticRoot: '/static',
-      network: [
-        '/myapi'
-      ],
-      fallback: {
-        '*.html': '/offline.html'
-      },
-      externalCacheEntries: [
-        'http://other.example.org/image.jpg'
-      ]
-    }
-  }
-};
-
-exports.write = {
-  paths: {
-    public: 'tmp/'
-  },
-  plugins: {
-    appcache: {
-      ignore: /\/\./,
-      manifestFile: 'my.appcache',
-      staticRoot: '/static',
-      network: [
-        '/myapi'
-      ],
-      fallback: {
-        '*.html': '/offline.html'
-      },
-      externalCacheEntries: [
-        'http://other.example.org/image.jpg'
-      ]
-    }
-  }
-};
-

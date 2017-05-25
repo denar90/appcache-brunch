@@ -83,11 +83,11 @@ Default value : `["*"]`
 An object mapping resource URIs to fallback URIs added to `FALLBACK` section. For example:
 
 ```js
-fallback: [
-  { '/main.py': '/static.html' },
-  { 'images/large/': 'images/offline.jpg' },
-  { '*.html': '/offline.html' }
-]
+fallback: {
+  '/main.py': '/static.html',
+  'images/large/': 'images/offline.jpg',
+  '*.html': '/offline.html'
+}
 ```
 
 Default value : `[]`
